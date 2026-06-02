@@ -95,13 +95,35 @@ DB 파일: `server/data.db` (git 제외, 로컬·서버에서 자동 생성)
 
 ---
 
-## 프로덕션 배포
+## 프로덕션 배포 (Vercel + Render)
 
-1. **API** (Render, Railway, VPS 등): `npm run start:server`  
-   - `JWT_SECRET`, `PORT`, `CORS_ORIGIN`(프론트 URL)
-2. **프론트** (Vercel 등): `npm run build`  
-   - `VITE_API_URL=https://your-api.example.com`
-3. API의 `CORS_ORIGIN`에 프론트 도메인 등록
+**왜 Vercel만으로는 로그인이 안 되나요?**  
+Vercel은 React **정적 프론트**만 호스팅합니다. 로그인·DB는 **Express + SQLite API**가 필요하며, 이 서버는 Render·Railway 등에 **별도 배포**해야 합니다.
+
+### 1단계: API 서버 (Render 권장)
+
+1. [Render](https://render.com)에서 New → **Blueprint** 또는 Web Service, 이 저장소 연결
+2. 루트의 [`render.yaml`](render.yaml) 사용 시: Start Command `npm run start:server`
+3. 환경 변수:
+   - `JWT_SECRET` — 32자 이상 랜덤 문자열
+   - `CORS_ORIGIN` — Vercel 앱 URL (예: `https://groom-260602-todolist.vercel.app`)
+4. 배포 후 API URL 확인 (예: `https://groom-todolist-api.onrender.com`)
+5. `https://.../api/health` 가 `{ "ok": true }` 이면 정상
+
+### 2단계: 프론트 (Vercel)
+
+Vercel 프로젝트 → **Settings → Environment Variables** (Production):
+
+| 변수 | 값 | 설명 |
+|------|-----|------|
+| `API_SERVER_URL` | `https://your-api.onrender.com` | **권장** — 빌드 시 `/api`를 Vercel에서 API로 프록시 (CORS 불필요) |
+| 또는 `VITE_API_URL` | 위와 동일 | 브라우저가 API URL로 직접 요청 (API에 `CORS_ORIGIN` 필수) |
+
+- Build Command: `npm run build` (기본값)
+- Output: `dist`
+- 변수 추가 후 **Redeploy** 필수
+
+로컬과 달리 `npm run dev`는 Vercel에서 실행되지 않습니다.
 
 ---
 
@@ -159,7 +181,8 @@ React (Zustand) → dataSync → Express API → SQLite (profiles + tasks)
 | `JWT_SECRET` | API JWT 서명 (필수) |
 | `PORT` | API 포트 (기본 3001) |
 | `CORS_ORIGIN` | 허용 프론트 URL (프로덕션) |
-| `VITE_API_URL` | 프론트 API 베이스 (프로덕션, dev는 비워두고 프록시 사용) |
+| `VITE_API_URL` | 프론트가 API를 직접 호출할 때 (Vercel 대안) |
+| `API_SERVER_URL` | Vercel 빌드 시 `/api` 프록시용 (README 배포 절) |
 
 ---
 

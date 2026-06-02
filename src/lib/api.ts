@@ -1,9 +1,24 @@
 const TOKEN_KEY = "today-planner-token";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+const SAME_ORIGIN_API = import.meta.env.VITE_SAME_ORIGIN_API === "true";
 
 export function isApiConfigured(): boolean {
-  return import.meta.env.DEV || Boolean(API_BASE);
+  if (import.meta.env.DEV) return true;
+  return Boolean(API_BASE) || SAME_ORIGIN_API;
+}
+
+/** API 미연결 시 로그인 화면 안내 문구 */
+export function getApiSetupMessage(): string {
+  if (import.meta.env.DEV) {
+    return "API 서버가 필요합니다. 터미널에서 npm run dev로 프론트와 서버를 함께 실행해 주세요.";
+  }
+  return (
+    "Vercel에는 프론트만 배포됩니다. Express API를 Render 등에 먼저 배포한 뒤, " +
+    "Vercel 프로젝트 → Settings → Environment Variables에 " +
+    "API_SERVER_URL(예: https://your-api.onrender.com)을 넣고 재배포해 주세요. " +
+    "또는 VITE_API_URL에 API 주소를 직접 넣을 수 있습니다. (README 배포 절 참고)"
+  );
 }
 
 export function getToken(): string | null {

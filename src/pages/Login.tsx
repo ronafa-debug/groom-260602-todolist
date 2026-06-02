@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { isApiConfigured } from "../lib/api";
+import { getApiSetupMessage, isApiConfigured } from "../lib/api";
 
 type Tab = "login" | "register";
 
@@ -48,9 +48,8 @@ export function Login() {
         </div>
 
         {!isApiConfigured() && (
-          <p className="text-sm text-danger bg-red-50 border border-danger/20 rounded-lg px-3 py-2">
-            API 서버가 필요합니다. 터미널에서 <code className="text-xs">npm run dev</code>로
-            프론트와 서버를 함께 실행해 주세요.
+          <p className="text-sm text-danger bg-red-50 border border-danger/20 rounded-lg px-3 py-2 leading-relaxed">
+            {getApiSetupMessage()}
           </p>
         )}
 

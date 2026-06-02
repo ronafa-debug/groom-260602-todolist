@@ -35,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isApiConfigured()) {
       setLoading(false);
-      setAuthError("API 서버 설정이 필요합니다.");
       return;
     }
 

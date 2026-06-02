@@ -1,0 +1,17 @@
+# Render.com — Express + SQLite API (프론트는 Vercel)
+# Dashboard에서 CORS_ORIGIN에 Vercel URL 추가 (예: https://your-app.vercel.app)
+services:
+  - type: web
+    name: groom-todolist-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start:server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
