@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4d796b;
+  --color-primary-dark: #3e685c;
+  --color-primary-soft: #6a9485;
+  --color-secondary: #f6c453;
+  --color-background: #fffdf5;
+  --color-cream: #faf6e8;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --font-sans: "Pretendard", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: #1f2937;
+}
+
+#root {
+  min-height: 100vh;
+}
