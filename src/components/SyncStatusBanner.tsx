@@ -4,6 +4,9 @@ export function SyncStatusBanner() {
   const syncError = useTaskStore((s) => s.syncError);
   const isSyncing = useTaskStore((s) => s.isSyncing);
   const isHydrated = useTaskStore((s) => s.isHydrated);
+  const isGuestMode = useTaskStore((s) => s.isGuestMode);
+
+  if (isGuestMode) return null;
 
   if (!isHydrated && !isSyncing) {
     return (

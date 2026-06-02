@@ -1,5 +1,6 @@
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { GuestModeBanner } from "./GuestModeBanner";
 import { useDataHydration } from "../hooks/useDataHydration";
 import { CompletionToast } from "./CompletionToast";
 import { LocalMigrationPrompt } from "./LocalMigrationPrompt";
@@ -8,7 +9,7 @@ import { Navbar } from "./Navbar";
 import { SyncStatusBanner } from "./SyncStatusBanner";
 
 export function Layout() {
-  const { signOut } = useAuth();
+  const { isGuest, signOut } = useAuth();
   useDataHydration();
 
   return (
@@ -26,17 +27,37 @@ export function Layout() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ModeToggle />
-            <button
-              type="button"
-              onClick={signOut}
-              className="text-[10px] px-2 py-1 rounded-md border border-white/30 text-white/90 hover:bg-white/15"
-            >
-              로그아웃
-            </button>
+            {isGuest ? (
+              <>
+                <Link
+                  to="/login"
+                  onClick={signOut}
+                  className="text-[10px] px-2 py-1 rounded-md border border-white/30 text-white/90 hover:bg-white/15"
+                >
+                  로그인하기
+                </Link>
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="text-[10px] px-2 py-1 rounded-md border border-white/30 text-white/90 hover:bg-white/15"
+                >
+                  체험 종료
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={signOut}
+                className="text-[10px] px-2 py-1 rounded-md border border-white/30 text-white/90 hover:bg-white/15"
+              >
+                로그아웃
+              </button>
+            )}
           </div>
         </div>
       </header>
 
+      <GuestModeBanner />
       <SyncStatusBanner />
       <Navbar />
 

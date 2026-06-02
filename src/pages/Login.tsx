@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { getApiSetupMessage, isApiConfigured } from "../lib/api";
 
 type Tab = "login" | "register";
 
 export function Login() {
-  const { user, loading, authError, clearAuthError, login, register } = useAuth();
+  const { user, loading, authError, clearAuthError, login, register, enterGuestMode } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +17,12 @@ export function Login() {
   if (!loading && user) {
     return <Navigate to="/" replace />;
   }
+
+  const handleGuestBrowse = () => {
+    clearAuthError();
+    enterGuestMode();
+    navigate("/", { replace: true });
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -145,6 +152,19 @@ export function Login() {
                 : "회원가입"}
           </button>
         </form>
+
+        <div className="pt-2 border-t border-primary/10 text-center space-y-2">
+          <p className="text-[11px] text-gray-500">
+            체험 모드 · 저장은 이 브라우저 탭에만 유지됩니다
+          </p>
+          <button
+            type="button"
+            onClick={handleGuestBrowse}
+            className="text-sm font-medium text-primary hover:text-primary-dark underline underline-offset-2"
+          >
+            로그인 없이 둘러보기
+          </button>
+        </div>
       </div>
     </div>
   );

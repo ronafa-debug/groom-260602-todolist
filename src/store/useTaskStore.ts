@@ -17,12 +17,17 @@ import {
   clearLegacyLocalStorage,
   readLegacyLocalSnapshot,
 } from "../utils/localMigration";
+import {
+  saveGuestSnapshot,
+  type GuestSnapshot,
+} from "../utils/guestSession";
 
 export type CategoryMap = Record<UserMode, string[]>;
 export type OrderListKey = "today" | "upcoming";
 
 interface TaskStore {
   userId: string | null;
+  isGuestMode: boolean;
   isHydrated: boolean;
   isSyncing: boolean;
   syncError: string | null;
@@ -48,6 +53,8 @@ interface TaskStore {
   toggleHabitCompletion: (habitId: string, date?: string) => void;
   hydrateFromServer: (userId: string) => Promise<void>;
   importLegacySnapshot: (userId: string) => Promise<void>;
+  loadGuestSession: (snapshot: GuestSnapshot) => void;
+  setGuestMode: (active: boolean) => void;
   resetStore: () => void;
   setUserMode: (mode: UserMode) => void;
   getCategories: (mode?: UserMode) => string[];
@@ -89,6 +96,29 @@ function removeIdFromOrders(id: string, todayOrder: string[], upcomingOrder: str
     todayOrder: todayOrder.filter((taskId) => taskId !== id),
     upcomingOrder: upcomingOrder.filter((taskId) => taskId !== id),
   };
+}
+
+function guestSnapshotFromStore(state: TaskStore): GuestSnapshot {
+  return {
+    tasks: state.tasks,
+    userMode: state.userMode,
+    categories: state.categories,
+    todayOrder: state.todayOrder,
+    upcomingOrder: state.upcomingOrder,
+    teacherTimetable: state.teacherTimetable,
+    parentTimetable: state.parentTimetable,
+    teacherHabits: state.teacherHabits,
+    parentHabits: state.parentHabits,
+    habitCompletions: state.habitCompletions,
+  };
+}
+
+function afterStoreMutation(get: () => TaskStore) {
+  if (get().isGuestMode) {
+    saveGuestSnapshot(guestSnapshotFromStore(get()));
+    return;
+  }
+  void persistProfile(get).catch(console.error);
 }
 
 async function persistProfile(get: () => TaskStore) {
@@ -136,6 +166,7 @@ function patchHabits(
 
 export const useTaskStore = create<TaskStore>()((set, get) => ({
   userId: null,
+  isGuestMode: false,
   isHydrated: false,
   isSyncing: false,
   syncError: null,
@@ -191,9 +222,23 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     }
   },
 
+  loadGuestSession: (snapshot) =>
+    set({
+      ...snapshot,
+      userId: null,
+      isGuestMode: true,
+      isHydrated: true,
+      isSyncing: false,
+      syncError: null,
+      lastEncouragement: null,
+    }),
+
+  setGuestMode: (active) => set({ isGuestMode: active }),
+
   resetStore: () =>
     set({
       userId: null,
+      isGuestMode: false,
       isHydrated: false,
       isSyncing: false,
       syncError: null,
@@ -220,7 +265,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     const entry: TimetableEntry = { ...input, id: crypto.randomUUID() };
     const list = [...get().getTimetableForMode(mode), entry];
     set(patchTimetable(mode, list));
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   updateTimetableEntry: (id, input) => {
@@ -229,14 +274,14 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       .getTimetableForMode(mode)
       .map((e) => (e.id === id ? { ...input, id } : e));
     set(patchTimetable(mode, list));
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   deleteTimetableEntry: (id) => {
     const mode = get().userMode;
     const list = get().getTimetableForMode(mode).filter((e) => e.id !== id);
     set(patchTimetable(mode, list));
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   getHabitsForMode: (mode) => {
@@ -253,7 +298,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     };
     const list = [...get().getHabitsForMode(mode), habit];
     set(patchHabits(mode, list));
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   updateHabit: (id, input) => {
@@ -262,7 +307,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       .getHabitsForMode(mode)
       .map((h) => (h.id === id ? { ...input, id, createdAt: h.createdAt } : h));
     set(patchHabits(mode, list));
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   deleteHabit: (id) => {
@@ -270,7 +315,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     const list = get().getHabitsForMode(mode).filter((h) => h.id !== id);
     const { [id]: _, ...restCompletions } = get().habitCompletions;
     set({ ...patchHabits(mode, list), habitCompletions: restCompletions });
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   toggleHabitCompletion: (habitId, date) => {
@@ -286,11 +331,15 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
         [habitId]: next,
       },
     });
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   setUserMode: (mode) => {
     set({ userMode: mode });
+    if (get().isGuestMode) {
+      afterStoreMutation(get);
+      return;
+    }
     void persistProfile(get).catch((err) => {
       console.error(err);
       set({
@@ -316,7 +365,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
         [mode]: [...list, trimmed],
       },
     });
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   updateCategory: (oldName, newName) => {
@@ -338,7 +387,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       },
       tasks: updatedTasks,
     });
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
     const userId = get().userId;
     if (userId) {
       changedTasks.forEach((t) => void updateTaskRow(userId, t).catch(console.error));
@@ -361,7 +410,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       },
       tasks: updatedTasks,
     });
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
     const userId = get().userId;
     if (userId) {
       tasksToSync
@@ -382,7 +431,9 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       createdAt: new Date().toISOString(),
     };
     set({ tasks: [...get().tasks, task] });
-    if (userId) {
+    if (get().isGuestMode) {
+      afterStoreMutation(get);
+    } else if (userId) {
       void insertTask(userId, task).catch((err) => {
         console.error(err);
         set({
@@ -408,7 +459,9 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     );
     set({ tasks: updated });
     const task = updated.find((t) => t.id === id);
-    if (userId && task) {
+    if (get().isGuestMode) {
+      afterStoreMutation(get);
+    } else if (userId && task) {
       void updateTaskRow(userId, task).catch((err) => {
         console.error(err);
         set({ syncError: err instanceof Error ? err.message : "저장에 실패했습니다." });
@@ -429,7 +482,9 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       lastEncouragement:
         toggled?.completed && wasIncomplete ? randomMessage() : get().lastEncouragement,
     });
-    if (userId && toggled) {
+    if (get().isGuestMode) {
+      afterStoreMutation(get);
+    } else if (userId && toggled) {
       void updateTaskRow(userId, toggled).catch(console.error);
     }
   },
@@ -442,7 +497,9 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       tasks: prevTasks.filter((task) => task.id !== id),
       ...removeIdFromOrders(id, todayOrder, upcomingOrder),
     });
-    if (userId) {
+    if (get().isGuestMode) {
+      afterStoreMutation(get);
+    } else if (userId) {
       void deleteTaskRow(userId, id).catch((err) => {
         console.error(err);
         set({ tasks: prevTasks, syncError: err instanceof Error ? err.message : "삭제에 실패했습니다." });
@@ -457,7 +514,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
         ? { todayOrder: orderedIds }
         : { upcomingOrder: orderedIds },
     );
-    void persistProfile(get).catch(console.error);
+    afterStoreMutation(get);
   },
 
   clearEncouragement: () => set({ lastEncouragement: null }),

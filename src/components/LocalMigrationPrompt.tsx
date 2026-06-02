@@ -10,6 +10,7 @@ export function LocalMigrationPrompt() {
   const todayOrder = useTaskStore((s) => s.todayOrder);
   const upcomingOrder = useTaskStore((s) => s.upcomingOrder);
   const userId = useTaskStore((s) => s.userId);
+  const isGuestMode = useTaskStore((s) => s.isGuestMode);
   const importLegacySnapshot = useTaskStore((s) => s.importLegacySnapshot);
   const isSyncing = useTaskStore((s) => s.isSyncing);
 
@@ -19,7 +20,14 @@ export function LocalMigrationPrompt() {
   const serverEmpty =
     tasks.length === 0 && todayOrder.length === 0 && upcomingOrder.length === 0;
 
-  if (!isHydrated || dismissed || !serverEmpty || !hasLegacyLocalData() || !userId) {
+  if (
+    isGuestMode ||
+    !isHydrated ||
+    dismissed ||
+    !serverEmpty ||
+    !hasLegacyLocalData() ||
+    !userId
+  ) {
     return null;
   }
 
