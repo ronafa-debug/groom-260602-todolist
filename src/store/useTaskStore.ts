@@ -10,6 +10,7 @@ import {
   uploadLocalSnapshot,
 } from "../services/dataSync";
 import type { Habit, HabitCompletions } from "../types/habit";
+import { matchesTimetableSlot } from "../data/timetable";
 import type { TimetableEntry } from "../types/timetable";
 import type { Priority, Task, UserMode } from "../types/task";
 import { toDateString } from "../utils/date";
@@ -46,6 +47,11 @@ interface TaskStore {
   addTimetableEntry: (input: Omit<TimetableEntry, "id">) => void;
   updateTimetableEntry: (id: string, input: Omit<TimetableEntry, "id">) => void;
   deleteTimetableEntry: (id: string) => void;
+  upsertTimetableCell: (
+    dayOfWeek: number,
+    period: number,
+    data: { title: string; note?: string },
+  ) => void;
   getHabitsForMode: (mode?: UserMode) => Habit[];
   addHabit: (input: Omit<Habit, "id" | "createdAt">) => void;
   updateHabit: (id: string, input: Omit<Habit, "id" | "createdAt">) => void;
@@ -282,6 +288,24 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     const list = get().getTimetableForMode(mode).filter((e) => e.id !== id);
     set(patchTimetable(mode, list));
     afterStoreMutation(get);
+  },
+
+  upsertTimetableCell: (dayOfWeek, period, data) => {
+    const mode = get().userMode;
+    const list = get().getTimetableForMode(mode);
+    const existing = list.find((e) => matchesTimetableSlot(e, dayOfWeek, period));
+    const payload: Omit<TimetableEntry, "id"> = {
+      dayOfWeek,
+      period,
+      title: data.title,
+      note: data.note,
+    };
+
+    if (existing) {
+      get().updateTimetableEntry(existing.id, payload);
+      return;
+    }
+    get().addTimetableEntry(payload);
   },
 
   getHabitsForMode: (mode) => {

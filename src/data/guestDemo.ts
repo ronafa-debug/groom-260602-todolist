@@ -75,17 +75,15 @@ export function getGuestDemoSnapshot(): GuestSnapshot {
     teacherTimetable: [
       {
         id: "guest-tt-1",
-        dayOfWeek: 0,
-        startTime: "09:00",
-        endTime: "09:45",
+        dayOfWeek: 1,
+        period: 1,
         title: "국어",
         note: "3학년 2반",
       },
       {
         id: "guest-tt-2",
-        dayOfWeek: 2,
-        startTime: "13:00",
-        endTime: "13:40",
+        dayOfWeek: 3,
+        period: 5,
         title: "창체",
       },
     ],

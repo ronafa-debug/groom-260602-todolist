@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/Layout";
 import { Calendar } from "./pages/Calendar";
+import { Community } from "./pages/Community";
 import { Habit } from "./pages/Habit";
 import { Timetable } from "./pages/Timetable";
 import { Completed } from "./pages/Completed";
@@ -24,6 +25,7 @@ function App() {
             <Route path="calendar" element={<Calendar />} />
             <Route path="timetable" element={<Timetable />} />
             <Route path="habit" element={<Habit />} />
+            <Route path="community" element={<Community />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

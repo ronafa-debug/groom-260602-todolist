@@ -8,6 +8,7 @@ const links = [
   { to: "/calendar", label: "Calendar", icon: "📅" },
   { to: "/timetable", label: "Timetabel", icon: "🕐" },
   { to: "/habit", label: "Habit", icon: "🎯" },
+  { to: "/community", label: "Community", icon: "💬" },
 ];
 
 export function Navbar() {

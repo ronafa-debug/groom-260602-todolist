@@ -12,6 +12,8 @@ app.use(
     origin: process.env.CORS_ORIGIN?.split(",") ?? [
       "http://localhost:5156",
       "http://127.0.0.1:5156",
+      "http://localhost:5157",
+      "http://127.0.0.1:5157",
       "http://localhost:5173",
       "http://127.0.0.1:5173",
     ],

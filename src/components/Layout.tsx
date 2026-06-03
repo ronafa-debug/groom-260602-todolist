@@ -22,7 +22,7 @@ export function Layout() {
               오늘도 수고했어요!
             </h1>
             <p className="text-white/75 text-[11px] mt-0.5">
-              힐링 Today Planner · 오뚝이아빠 김선생
+              교사와 부모를 위한 힐링 플래너
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -66,7 +66,7 @@ export function Layout() {
       </main>
 
       <footer className="text-center text-xs text-gray-400 py-4">
-        교사와 부모를 위한 힐링 플래너
+        힐링 Today Planner · 오뚝이아빠 김선생
       </footer>
 
       <CompletionToast />
